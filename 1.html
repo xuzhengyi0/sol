@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RENT · 播放器</title>
+    <style>
+        /* ===== 全局重置 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        body {
+            /* 主色调改为 #A80000 (深红色) */
+            background-color: #A80000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .player-container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px 25px 28px;
+            text-align: center;
+        }
+
+        /* ===== 标题 ===== */
+        h1 {
+            color: #A80000;          /* 与背景色呼应 */
+            margin-bottom: 22px;
+            font-weight: 700;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+
+        /* ===== 专辑封面（圆形） ===== */
+        .album-art {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin: 0 auto 25px;
+            background: linear-gradient(135deg, #A80000, #6b0000);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 18px rgba(168, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        .album-art i {
+            font-size: 60px;
+            color: white;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+
+        /* ===== 歌曲信息 ===== */
+        .song-info {
+            margin-bottom: 22px;
+        }
+
+        .song-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e1e1e;
+            margin-bottom: 4px;
+        }
+
+        .song-artist {
+            font-size: 16px;
+            color: #777;
+        }
+
+        /* ===== 进度条 ===== */
+        .progress-area {
+            margin-bottom: 22px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+
+        .progress {
+            height: 100%;
+            width: 0%;
+            background-color: #A80000;     /* 进度条颜色 */
+            border-radius: inherit;
+            transition: width 0.1s linear;
+        }
+
+        .timer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* ===== 控制按钮 ===== */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .controls button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #555;
+            margin: 0 15px;
+            transition: color 0.2s, transform 0.15s;
+        }
+
+        .controls button:hover {
+            color: #A80000;
+        }
+
+        .controls button:active {
+            transform: scale(0.92);
+        }
+
+        .play-pause {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #A80000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 26px;
+            box-shadow: 0 6px 16px rgba(168, 0, 0, 0.35);
+            transition: background 0.2s, transform 0.15s;
+        }
+
+        .play-pause:hover {
+            background-color: #cc0000;
+            transform: scale(1.04);
+        }
+
+        /* ===== 音量控制 ===== */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+            gap: 10px;
+        }
+
+        .volume-control i {
+            color: #777;
+            font-size: 18px;
+        }
+
+        .volume-slider {
+            width: 100px;
+            height: 4px;
+            background-color: #e0e0e0;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+
+        .volume-percentage {
+            height: 100%;
+            width: 70%;
+            background-color: #A80000;
+            border-radius: inherit;
+        }
+
+        /* ===== 底部信息（已移除文件信息和颜色代码） ===== */
+        /* 原本显示 "文件: 1.mp3" 和 "背景色: #99CC66" 的 div 已被删除 */
+        /* 现在只保留一个极简的版权或提示（可选） */
+        .footer-note {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .footer-note i {
+            color: #A80000;
+            margin-right: 4px;
+        }
+
+        /* ===== 响应式调整 ===== */
+        @media (max-width: 440px) {
+            .album-art {
+                width: 160px;
+                height: 160px;
+            }
+            .album-art i {
+                font-size: 48px;
+            }
+            .play-pause {
+                width: 52px;
+                height: 52px;
+                font-size: 22px;
+            }
+        }
+    </style>
+    <!-- Font Awesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+
+    <div class="player-container">
+        <!-- ===== 标题改为 "RENT" ===== -->
+        <h1>🎭 RENT</h1>
+
+        <!-- ===== 封面 ===== -->
+        <div class="album-art">
+            <i class="fas fa-music"></i>
+        </div>
+
+        <!-- ===== 歌曲信息：歌名改为 "Seasons of Love" ===== -->
+        <div class="song-info">
+            <div class="song-title">Seasons of Love</div>
+            <div class="song-artist">RENT · 原声带</div>
+        </div>
+
+        <!-- ===== 进度条 ===== -->
+        <div class="progress-area">
+            <div class="progress-bar" id="progressBar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="timer">
+                <span class="current" id="currentTime">0:00</span>
+                <span class="duration" id="durationTime">0:00</span>
+            </div>
+        </div>
+
+        <!-- ===== 控制按钮 ===== -->
+        <div class="controls">
+            <button id="prevBtn" title="上一首 (此版本仅单曲)"><i class="fas fa-step-backward"></i></button>
+            <button class="play-pause" id="playPauseBtn">
+                <i class="fas fa-play"></i>
+            </button>
+            <button id="nextBtn" title="下一首 (此版本仅单曲)"><i class="fas fa-step-forward"></i></button>
+        </div>
+
+        <!-- ===== 音量控制 ===== -->
+        <div class="volume-control">
+            <i class="fas fa-volume-up"></i>
+            <div class="volume-slider" id="volumeSlider">
+                <div class="volume-percentage" id="volumeFill"></div>
+            </div>
+        </div>
+
+        <!-- ===== 底部小提示（不显示文件/颜色信息） ===== -->
+        <div class="footer-note">
+            <i class="fas fa-headphones-alt"></i> 525,600 分钟 · 用爱丈量
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!--  ★★★ 音频元素：请将 src 替换为您自己的 MP3 文件路径 ★★★    -->
+    <!--  例如：<audio id="audio" src="Seasons_of_Love.mp3"></audio>   -->
+    <!--  或使用网络地址：src="https://example.com/song.mp3"          -->
+    <!-- ============================================================ -->
+    <audio id="audio" src="Seasons_of_Love.mp3"></audio>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ===== DOM 引用 =====
+            const audio = document.getElementById('audio');
+            const playBtn = document.getElementById('playPauseBtn');
+            const progressFill = document.getElementById('progress');
+            const currentTimeEl = document.getElementById('currentTime');
+            const durationTimeEl = document.getElementById('durationTime');
+            const volumeSlider = document.getElementById('volumeSlider');
+            const volumeFill = document.getElementById('volumeFill');
+
+            // ===== 播放 / 暂停 =====
+            playBtn.addEventListener('click', function() {
+                if (audio.paused) {
+                    audio.play().catch(() => {});
+                } else {
+                    audio.pause();
+                }
+            });
+
+            // 同步按钮图标
+            audio.addEventListener('play', function() {
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            });
+            audio.addEventListener('pause', function() {
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            });
+            // 加载完成后若暂停，显示播放图标
+            audio.addEventListener('loadedmetadata', function() {
+                if (audio.paused) {
+                    playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                }
+            });
+
+            // ===== 进度条更新 =====
+            audio.addEventListener('timeupdate', function() {
+                const dur = audio.duration;
+                if (dur && isFinite(dur)) {
+                    const pct = (audio.currentTime / dur) * 100;
+                    progressFill.style.width = pct + '%';
+                    currentTimeEl.textContent = formatTime(audio.currentTime);
+                    durationTimeEl.textContent = formatTime(dur);
+                }
+            });
+
+            // 点击进度条跳转
+            document.getElementById('progressBar').addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                if (audio.duration && isFinite(audio.duration)) {
+                    audio.currentTime = x * audio.duration;
+                }
+            });
+
+            // ===== 音量控制 =====
+            volumeSlider.addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+                audio.volume = x;
+                volumeFill.style.width = (x * 100) + '%';
+            });
+
+            // 初始音量 70%
+            audio.volume = 0.7;
+            volumeFill.style.width = '70%';
+
+            // ===== 辅助：时间格式化 =====
+            function formatTime(seconds) {
+                if (!seconds || isNaN(seconds)) return '0:00';
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                return m + ':' + (s < 10 ? '0' : '') + s;
+            }
+
+            // 加载元数据后显示总时长
+            audio.addEventListener('loadedmetadata', function() {
+                durationTimeEl.textContent = formatTime(audio.duration);
+            });
+
+            // ===== 如果音频加载失败（例如文件不存在），给出控制台提示 =====
+            audio.addEventListener('error', function(e) {
+                console.warn('⚠️ 音频加载失败，请检查 src 路径是否正确。');
+                console.info('💡 提示：将您的 MP3 文件放在同目录下，并将 <audio> 标签的 src 改为正确的文件名。');
+            });
+
+            // 键盘快捷键（空格切换播放）
+            document.addEventListener('keydown', function(e) {
+                if (e.target.tagName === 'INPUT') return;
+                if (e.key === ' ' || e.key === 'Space') {
+                    e.preventDefault();
+                    playBtn.click();
+                }
+            });
+
+            console.log('🎵 RENT 播放器已启动！');
+            console.log('📁 请确保音频文件 "Seasons_of_Love.mp3" 存在于正确路径，或修改 <audio> 的 src 属性。');
+        })();
+    </script>
+
+</body>
+</html>
